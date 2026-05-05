@@ -1,0 +1,15 @@
+## Interface: 120005
+## Title: BazTooltipEditor
+## Notes: Inspect, reorder, and filter tooltip lines added by other addons
+## Author: Baz4k
+## Version: 001
+## X-License: GPL v2
+## Category: Baz Suite
+## Dependencies: BazCore
+## SavedVariables: BazTooltipEditorDB
+
+Core.lua
+Attribution.lua
+Hooks.lua
+Inspector.lua
+Settings.lua
