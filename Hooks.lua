@@ -124,6 +124,36 @@ end
 -- captures don't account for as "(direct mutation)" entries.
 ---------------------------------------------------------------------------
 
+-- Recursively walk a frame's child frames and their regions, returning
+-- every visible FontString that contains text. Used to find tooltip
+-- additions that live in child frames Blizzard's NumLines API doesn't
+-- count (Zygor's gold-data block being the canonical example).
+local function CollectChildFontStrings(frame, out, depth)
+    depth = depth or 0
+    if depth > 4 then return end  -- safety: tooltips don't nest deeper
+    if not frame.GetChildren then return end
+
+    if frame.GetRegions then
+        for _, region in ipairs({ frame:GetRegions() }) do
+            if region.GetObjectType
+               and region:GetObjectType() == "FontString"
+               and region:IsShown()
+               and region.GetText then
+                local text = region:GetText()
+                if text and text ~= "" then
+                    out[#out + 1] = region
+                end
+            end
+        end
+    end
+
+    for _, child in ipairs({ frame:GetChildren() }) do
+        if child.IsShown and child:IsShown() then
+            CollectChildFontStrings(child, out, depth + 1)
+        end
+    end
+end
+
 local function ScanUnattributed(tip)
     local w = working[tip]
     if not w or w._scanned then return end
@@ -132,43 +162,82 @@ local function ScanUnattributed(tip)
     local tipName = tip.GetName and tip:GetName()
     if not tipName then return end
 
-    local numLines = tip.NumLines and tip:NumLines() or 0
-    if numLines == 0 then return end
-
-    -- Multiset of texts we already captured via AddLine / AddDoubleLine.
-    -- Double-lines flatten to "left | right" the same way recordLine
-    -- builds them, so the visible left+right pair won't match - we only
-    -- check single text lines here. Direct-mutation addons almost
-    -- always touch left FontStrings, not the rarely-used double-line
-    -- right column.
+    -- Multiset keyed by signature (whitespace-normalised, colour-code
+    -- and number-stripped). Using raw text here lost duplicates to
+    -- minor differences between the AddLine arg and what GetText()
+    -- reads back later. For double-lines we index *both* the flattened
+    -- "left | right" form and the LEFT-only form, since the scanner
+    -- only walks TextLeftN FontStrings - the visible left half should
+    -- match against the double-line's left text.
     local captured = {}
+    local function add(sig)
+        if sig == "" then return end
+        captured[sig] = (captured[sig] or 0) + 1
+    end
     for _, line in ipairs(w.lines) do
-        if line.kind == "text" then
-            local t = line.text or ""
-            captured[t] = (captured[t] or 0) + 1
+        add(line.sig or "")
+        if line.kind == "double" then
+            -- The full flattened sig was already added above. Also
+            -- index the left-only signature so a TextLeftN-only walker
+            -- matches even though the right column is in TextRightN.
+            local left = (line.text or ""):match("^(.-)%s*|%s*")
+            if left then add(Attribution:Signature(left)) end
         end
     end
 
+    -- Pass 1: tooltip's own TextLeft FontStrings (the standard line
+    -- sequence Blizzard's NumLines counts).
+    local numLines = tip.NumLines and tip:NumLines() or 0
     for i = 1, numLines do
         local fs = _G[tipName .. "TextLeft" .. i]
-        if fs and fs.GetText then
+        if fs and fs.GetText and fs:IsShown() then
             local visible = fs:GetText()
             if visible and visible ~= "" then
-                local count = captured[visible]
+                local sig = Attribution:Signature(visible)
+                local count = captured[sig]
                 if count and count > 0 then
-                    captured[visible] = count - 1
+                    captured[sig] = count - 1
                 else
-                    -- This visible line was never seen by AddLine; an
-                    -- addon set the FontString directly.
                     local r, g, b = fs:GetTextColor()
                     w.lines[#w.lines + 1] = {
                         kind  = "text",
                         text  = visible,
-                        sig   = Attribution:Signature(visible),
+                        sig   = sig,
                         addon = "(direct mutation)",
                         color = (r and g and b) and { r, g, b } or nil,
                     }
+                    captured[sig] = -1  -- mark seen so the child-frame
+                                        -- pass doesn't double-add it
                 end
+            end
+        end
+    end
+
+    -- Pass 2: FontStrings inside child frames. Catches addons that
+    -- attach their own panel onto the tooltip (Zygor-style overlays).
+    local extras = {}
+    CollectChildFontStrings(tip, extras)
+    for _, fs in ipairs(extras) do
+        local visible = fs:GetText()
+        if visible and visible ~= "" then
+            local sig = Attribution:Signature(visible)
+            local count = captured[sig]
+            if not count or count <= 0 then
+                if count == nil then
+                    -- Brand-new line that the standard scan didn't see.
+                    local r, g, b = fs:GetTextColor()
+                    w.lines[#w.lines + 1] = {
+                        kind  = "text",
+                        text  = visible,
+                        sig   = sig,
+                        addon = "(direct mutation)",
+                        color = (r and g and b) and { r, g, b } or nil,
+                    }
+                    captured[sig] = -1
+                end
+                -- count <= 0 means we already accounted for it; skip.
+            else
+                captured[sig] = count - 1
             end
         end
     end

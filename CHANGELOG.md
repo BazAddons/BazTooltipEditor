@@ -1,5 +1,24 @@
 # BazTooltipEditor Changelog
 
+## 003 — Fewer false direct-mutation entries
+
+- **Signature-based delta-scan comparison.** v002 compared raw `AddLine`
+  text to FontString `:GetText()` output, but tiny differences (escaped
+  colour codes, internal Blizzard reformatting) caused captured lines
+  to appear as `(direct mutation)` duplicates. Comparison now uses the
+  same whitespace-/colour-/digit-normalised signature the attribution
+  cache uses, so cosmetic differences collapse.
+- **Double-line left-text indexing.** Captured `AddDoubleLine` entries
+  now also register their left half alone, so the scanner walking
+  `TextLeftN` FontStrings matches "Feet" against the captured "Feet |
+  Cloth" double-line instead of treating it as a new line.
+- **Recursive child-frame scan.** Some addons (Zygor's gold-data
+  overlay being the canonical case) attach their own panel onto the
+  tooltip rather than touching its `TextLeftN` FontStrings. The post-
+  call delta scan now walks `tip:GetChildren()` and their regions
+  recursively, surfacing FontStrings inside child frames as
+  `(direct mutation)` entries.
+
 ## 002 — Catches direct-mutation lines, captures colours, /btt capture
 
 - **Direct-mutation detection.** Some addons (Zygor's gold-data block
