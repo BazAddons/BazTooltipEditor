@@ -38,7 +38,7 @@ end
 ---------------------------------------------------------------------------
 
 local PANEL_WIDTH  = 480
-local PANEL_HEIGHT = 360
+local PANEL_HEIGHT = 600
 local ROW_HEIGHT   = 18
 
 local function BuildPanel()

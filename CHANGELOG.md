@@ -1,5 +1,15 @@
 # BazTooltipEditor Changelog
 
+## 004 — Double-line right halves no longer mis-flagged + taller panel
+
+- Indexing both halves of every captured `AddDoubleLine`. v003 only
+  registered the left text in the delta-scan multiset, so the right
+  half ("Cloth" against a "Feet | Cloth" double-line, "Speed 2.60"
+  against "84-141 Damage | Speed 2.60", etc.) was treated as a brand-
+  new direct-mutation entry. Both halves are indexed now.
+- Inspector panel is taller (360 px → 600 px) so a typical equipped-
+ item tooltip fits without scrolling.
+
 ## 003 — Fewer false direct-mutation entries
 
 - **Signature-based delta-scan comparison.** v002 compared raw `AddLine`

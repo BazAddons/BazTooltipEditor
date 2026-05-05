@@ -178,10 +178,16 @@ local function ScanUnattributed(tip)
         add(line.sig or "")
         if line.kind == "double" then
             -- The full flattened sig was already added above. Also
-            -- index the left-only signature so a TextLeftN-only walker
-            -- matches even though the right column is in TextRightN.
-            local left = (line.text or ""):match("^(.-)%s*|%s*")
-            if left then add(Attribution:Signature(left)) end
+            -- index BOTH halves separately: the recursive child-frame
+            -- walk picks up TextLeftN and TextRightN FontStrings (both
+            -- live as regions of the tooltip), and each will appear as
+            -- its own line - "Feet" on the left and "Cloth" on the
+            -- right won't match the flattened "Feet | Cloth" sig
+            -- without the per-half indexing.
+            local text = line.text or ""
+            local left, right = text:match("^(.-)%s*|%s*(.*)$")
+            if left  then add(Attribution:Signature(left))  end
+            if right then add(Attribution:Signature(right)) end
         end
     end
 
