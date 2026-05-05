@@ -205,9 +205,8 @@ end
 -- Rendering
 ---------------------------------------------------------------------------
 
-function Inspector:Render(tip)
+function Inspector:RenderCapture(capture)
     if not panel then return end
-    local capture = addon.WorkingTooltips and addon.WorkingTooltips[tip]
     if not capture then return end
 
     local typeName = TYPE_LABEL[capture.type or -1]
@@ -243,6 +242,14 @@ function Inspector:Render(tip)
     panel.content:SetHeight(math.max(y, 1))
 end
 
+-- Render whatever's currently in the working buffer for `tip`. Thin
+-- adapter for the live-rendering path; new code prefers RenderCapture
+-- with an explicit capture object so snapshots can be rendered too.
+function Inspector:Render(tip)
+    local capture = addon.WorkingTooltips and addon.WorkingTooltips[tip]
+    self:RenderCapture(capture)
+end
+
 ---------------------------------------------------------------------------
 -- Hook entry point (called from Hooks.lua's TooltipDataProcessor post-call)
 ---------------------------------------------------------------------------
@@ -252,6 +259,40 @@ function Inspector:OnTooltipReady(tip)
     if frozen then return end
     lastSeenTooltip = tip
     self:Render(tip)
+end
+
+---------------------------------------------------------------------------
+-- Snapshot helpers
+--
+-- The context-menu "Inspect this tooltip" entry needs to capture the
+-- tooltip's contents at menu-open time and render them later: by the
+-- time the user clicks the entry the source GameTooltip has already
+-- hidden behind the menu, so a live re-query returns nothing.
+---------------------------------------------------------------------------
+
+function Inspector:SnapshotWorking(tip)
+    local working = addon.WorkingTooltips and addon.WorkingTooltips[tip]
+    if not working or not working.lines or #working.lines == 0 then return nil end
+    local snapshot = { type = working.type, lines = {} }
+    for i, line in ipairs(working.lines) do
+        snapshot.lines[i] = {
+            kind  = line.kind,
+            text  = line.text,
+            sig   = line.sig,
+            addon = line.addon,
+            color = line.color,
+        }
+    end
+    return snapshot
+end
+
+function Inspector:ShowSnapshot(snapshot)
+    if not snapshot then return end
+    panel = panel or BuildPanel()
+    panel:Show()
+    addon:SetSetting("inspectorOpen", true)
+    if not frozen then self:ToggleFreeze() end
+    self:RenderCapture(snapshot)
 end
 
 ---------------------------------------------------------------------------

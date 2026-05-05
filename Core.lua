@@ -82,12 +82,22 @@ if BazCore.RegisterContextMenuSection then
         -- Only offer the entry while a tooltip is actually visible -
         -- there's nothing to inspect otherwise.
         if not GameTooltip or not GameTooltip:IsShown() then return end
+
+        -- Snapshot now while the source tooltip is still up. Once the
+        -- context menu shows, the tooltip hides; the entry's onClick
+        -- can no longer query GameTooltip:GetText() directly.
+        local snapshot
+        if addon.Inspector and addon.Inspector.SnapshotWorking then
+            snapshot = addon.Inspector:SnapshotWorking(GameTooltip)
+        end
+        if not snapshot then return end
+
         return {
             {
                 label = "Inspect this tooltip",
                 onClick = function()
-                    if addon.Inspector and addon.Inspector.Capture then
-                        addon.Inspector:Capture()
+                    if addon.Inspector and addon.Inspector.ShowSnapshot then
+                        addon.Inspector:ShowSnapshot(snapshot)
                     end
                 end,
             },

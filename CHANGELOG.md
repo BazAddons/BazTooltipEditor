@@ -1,5 +1,15 @@
 # BazTooltipEditor Changelog
 
+## 007 — Inspect entry snapshots at menu-open time
+
+Clicking "Inspect this tooltip" from the BazBags or BazBars context
+menu used to print "No tooltip is currently visible" - by the time
+the user clicked the entry the source tooltip had already hidden
+behind the menu. The section now snapshots the captured lines when
+the menu opens (while the tooltip is still visible) and the entry's
+onClick renders that snapshot directly, so the inspector freezes
+on the right tooltip every time.
+
 ## 006 — Inspect entry also lives in BazBars's shift+right-click menu
 
 The "Inspect this tooltip" entry now registers against both the
