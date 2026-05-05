@@ -223,6 +223,14 @@ function Inspector:Render(tip)
         row.addon:SetText(line.addon or "?")
         row.addon:SetTextColor(ColorForAddon(line.addon or "Blizzard"))
         row.text:SetText(line.text or "")
+        -- Apply the line's captured colour so the inspector reflects how
+        -- the line will actually render in the tooltip (e.g. "Crafting
+        -- Reagent" in cyan, quest-prereqs in red).
+        if line.color then
+            row.text:SetTextColor(line.color[1], line.color[2], line.color[3])
+        else
+            row.text:SetTextColor(1, 1, 1)
+        end
         row:Show()
         y = y + ROW_HEIGHT
     end
@@ -284,6 +292,27 @@ end
 
 function Inspector:Refresh()
     if lastSeenTooltip then self:Render(lastSeenTooltip) end
+end
+
+---------------------------------------------------------------------------
+-- Capture: snapshot whatever's currently on GameTooltip and freeze.
+-- Triggered by /btt capture and the future shift+right-click menu entry.
+---------------------------------------------------------------------------
+
+function Inspector:Capture()
+    local tip = GameTooltip
+    if not tip or not tip:IsShown() then
+        addon:Print("No tooltip is currently visible. Hover something first, then run /btt capture.")
+        return
+    end
+    -- Make sure the working buffer reflects whatever's on screen now,
+    -- including any direct-mutation lines added by addons that bypassed
+    -- AddLine (the post-call delta scan handles that path).
+    if addon.ScanUnattributed then addon.ScanUnattributed(tip) end
+    self:Show()
+    lastSeenTooltip = tip
+    if not frozen then self:ToggleFreeze() end
+    self:Render(tip)
 end
 
 ---------------------------------------------------------------------------

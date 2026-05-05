@@ -34,6 +34,14 @@ addon = BazCore:RegisterAddon(ADDON_NAME, {
                 end
             end,
         },
+        capture = {
+            desc = "Snapshot the currently visible tooltip and freeze",
+            handler = function()
+                if addon.Inspector and addon.Inspector.Capture then
+                    addon.Inspector:Capture()
+                end
+            end,
+        },
         reset = {
             desc = "Clear cached attribution data",
             handler = function()

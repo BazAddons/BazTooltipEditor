@@ -13,7 +13,7 @@
 
 ## What it does
 
-Open the inspector with `/btt`, then hover an item, spell, NPC, or quest. Every line of the resulting tooltip shows up in the panel with the name of the addon that added it. Useful for tracking down which addon is responsible for the noise on your tooltips before you decide what to do about it.
+Open the inspector with `/btt inspect`, then hover an item, spell, NPC, or quest. Every line of the resulting tooltip shows up in the panel with the name of the addon that added it. Useful for tracking down which addon is responsible for the noise on your tooltips before you decide what to do about it.
 
 This is a v1 prototype — it inspects, it doesn't yet edit. Hide / reorder rules are next.
 
@@ -21,8 +21,8 @@ This is a v1 prototype — it inspects, it doesn't yet edit. Hide / reorder rule
 
 | Command | Description |
 |---------|-------------|
-| `/btt` | Toggle the inspector panel |
-| `/btt inspect` | Same as `/btt` |
+| `/btt` | Open the settings page |
+| `/btt inspect` | Toggle the inspector panel |
 | `/btt reset` | Clear the cached attribution data |
 
 ## How attribution works

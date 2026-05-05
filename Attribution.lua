@@ -26,6 +26,16 @@ local SKIP_ADDONS = {
     BazCore          = true,
 }
 
+-- "Wrapper layer" addons that don't generate tooltip content themselves
+-- but appear on the stack because they replaced (rather than
+-- hooksecurefunc'd) one of the tooltip APIs. When the walker encounters
+-- one of these, it keeps going - the deeper frame is the real source.
+-- Empty for now; populate as wrapping addons are confirmed in the wild.
+-- (BlizzMove is NOT a wrapper - it legitimately re-emits the sell-price
+-- line via TooltipDataProcessor.AddLinePreCall, so attributing that
+-- line to it is correct.)
+local WRAPPER_ADDONS = {}
+
 ---------------------------------------------------------------------------
 -- Line text > stable signature
 --
@@ -61,9 +71,33 @@ end
 -- a frame outside our skip-list.
 ---------------------------------------------------------------------------
 
+-- Collapse Blizzard's many internal addon paths (Blizzard_SharedXML,
+-- Blizzard_TooltipDataProcessor, Blizzard_PlayerInteractionFrameTemplates,
+-- etc.) to a single "Blizzard" credit. The user wants to know "is this
+-- a third-party addon or shipped with the game" - which Blizzard module
+-- the line happens to live in is noise.
+local function NormalizeAddonName(name)
+    if not name then return nil end
+    if name:find("^Blizzard_") then return "Blizzard" end
+    if name == "FrameXML" then return "Blizzard" end
+    return name
+end
+
 function Attribution:Identify()
-    local name = BazCore:GetAddonFromStack(3, SKIP_ADDONS)
-    return name or "Blizzard"
+    -- Walk the whole stack looking for the first "real content" addon -
+    -- skip our own frames AND any registered wrapper-layer addons so a
+    -- chain like `Blizzard > BlizzMove (wrapper) > our hook` resolves
+    -- to Blizzard rather than BlizzMove.
+    local stack = debugstack(3)
+    if stack and stack ~= "" then
+        for line in stack:gmatch("[^\n]+") do
+            local n = line:match("Interface[\\/]AddOns[\\/]([^\\/]+)[\\/]")
+            if n and not SKIP_ADDONS[n] and not WRAPPER_ADDONS[n] then
+                return NormalizeAddonName(n) or "Blizzard"
+            end
+        end
+    end
+    return "Blizzard"
 end
 
 ---------------------------------------------------------------------------
