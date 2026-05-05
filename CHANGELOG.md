@@ -1,5 +1,17 @@
 # BazTooltipEditor Changelog
 
+## 005 — "Inspect this tooltip" context-menu entry
+
+Registers an "Inspect this tooltip" entry into BazCore's shared
+`bag-item` context menu (BazCore 116+). Now when you shift+right-click
+a bag slot, the BazBags category menu appears with a BazTooltipEditor
+section below it offering one-click capture of the current tooltip
+into the inspector — no more flicking back to chat to type
+`/btt capture`.
+
+The same entry will register against more scopes (bar-slot, unit,
+quest pin, etc.) as BazCore exposes them.
+
 ## 004 — Double-line right halves no longer mis-flagged + taller panel
 
 - Indexing both halves of every captured `AddDoubleLine`. v003 only

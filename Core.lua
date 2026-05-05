@@ -65,3 +65,34 @@ addon = BazCore:RegisterAddon(ADDON_NAME, {
 addon.Hooks       = {}
 addon.Attribution = {}
 addon.Inspector   = {}
+
+---------------------------------------------------------------------------
+-- Context-menu integration
+---------------------------------------------------------------------------
+--
+-- Register an "Inspect this tooltip" entry into BazCore's shared
+-- "bag-item" scope. This is the prototype for the broader pattern: any
+-- shift+right-click context that's already showing a tooltip is a good
+-- moment to offer the inspector. As BazCore adds more scopes (bar-slot,
+-- unit-frame, etc.) we register the same entry against each.
+---------------------------------------------------------------------------
+
+if BazCore.RegisterContextMenuSection then
+    local function InspectorSection(ctx)
+        -- Only offer the entry while a tooltip is actually visible -
+        -- there's nothing to inspect otherwise.
+        if not GameTooltip or not GameTooltip:IsShown() then return end
+        return {
+            {
+                label = "Inspect this tooltip",
+                onClick = function()
+                    if addon.Inspector and addon.Inspector.Capture then
+                        addon.Inspector:Capture()
+                    end
+                end,
+            },
+        }
+    end
+
+    BazCore:RegisterContextMenuSection("bag-item", "BazTooltipEditor", InspectorSection)
+end
