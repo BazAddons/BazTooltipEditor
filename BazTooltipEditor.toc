@@ -2,7 +2,7 @@
 ## Title: BazTooltipEditor
 ## Notes: Inspect, reorder, and filter tooltip lines added by other addons
 ## Author: Baz4k
-## Version: 005
+## Version: 006
 ## X-License: GPL v2
 ## Category: Baz Suite
 ## Dependencies: BazCore

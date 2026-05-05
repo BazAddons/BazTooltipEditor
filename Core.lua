@@ -95,4 +95,5 @@ if BazCore.RegisterContextMenuSection then
     end
 
     BazCore:RegisterContextMenuSection("bag-item", "BazTooltipEditor", InspectorSection)
+    BazCore:RegisterContextMenuSection("bar-slot", "BazTooltipEditor", InspectorSection)
 end

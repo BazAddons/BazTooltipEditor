@@ -1,5 +1,12 @@
 # BazTooltipEditor Changelog
 
+## 006 — Inspect entry also lives in BazBars's shift+right-click menu
+
+The "Inspect this tooltip" entry now registers against both the
+`bag-item` (BazBags) and `bar-slot` (BazBars 054+) scopes, so the
+inspector is one click away from any tooltip-bearing frame in the
+suite.
+
 ## 005 — "Inspect this tooltip" context-menu entry
 
 Registers an "Inspect this tooltip" entry into BazCore's shared
